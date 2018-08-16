@@ -34,7 +34,6 @@
         }
     }';
     // Set values and create regex for variables
-    // Build the url
     $url = 'http://' . $_SERVER['SERVER_NAME'] . $_SERVER['REQUEST_URI'];
     $currentPage = $_SERVER['REQUEST_URI'];
     $currentServer = $_SERVER['SERVER_NAME'];
@@ -43,10 +42,24 @@
     // Get the current logo
     $custom_logo_id = get_theme_mod( 'custom_logo' );
     $image = wp_get_attachment_image_src( $custom_logo_id , 'full' );
+
     // Regex for stripping name out of url and removing mime type
     $homeReplaced = str_replace('https://', '', $currentHome);
     $withoutExtension = substr($homeReplaced, 0, strrpos($homeReplaced, ".")); // Remove everything after . 
     $homeTrimmed = preg_replace("/[\W\-]/", ' ', $withoutExtension); // Replace all non alpha numeric with space's 
+    $homeFormatted = ucfirst($homeTrimmed);
+
+    // Regex check page name for - perform check to replace string before delimeter.
+    $string_pos = strpos($currentPage, '-');
+    $preg_result = [];
+    preg_match('/-(.*)/', $currentPage, $preg_result); // Location name stripped after - and put in preg_result
+    
+    // Add delimeters and strip slashes
+    $pageString = strval($currentPage) . "/"; 
+    $loc = str_replace('/', '', $currentPage);
+    $loc_name = str_replace('.php', '', $preg_result[1]);
+    $loc_Trimmed = preg_replace("/[\W\-]/", ' ', $loc_name);
+    $locFormatted = ucfirst($loc_Trimmed);
 
     // Yoast meta description
     $yoast = get_post_meta(get_the_ID(), '_yoast_wpseo_metadesc', true); 
@@ -54,28 +67,16 @@
         // Yoast has not been found, get standard meta data
         $yoast = get_post_meta(get_the_ID());
     } else {
-        // Yoast has been found, succes
+        // Yoast has been found
         $yoast = $yoast;
     }
-
-    // Regex check page name for - peform check to replace string before delimeter.
-    $string_pos = strpos($currentPage, '-');
-    $preg_result = [];
-    preg_match('/-(.*)/', $currentPage, $preg_result); // Location name stripped after -
-
-    // Add delimeters and strip slashes
-    $pageString = strval($currentPage) . "/"; 
-    $loc = str_replace('/', '', $currentPage);
-    $loc_name = str_replace('.php', '', $preg_result[1]);
-    $loc_Trimmed = preg_replace("/[\W\-]/", ' ', $loc_name);
-
         // Decode the json data in php readable code
         $jsonString = json_decode($data, true);
 
         // Write location name based on url to the Json
-        $jsonString['address']['addressCountry'] = $loc_Trimmed;
+        $jsonString['address']['addressCountry'] = $locFormatted;
         // Write name, url and logo
-        $jsonString['name'] =  $homeTrimmed;
+        $jsonString['name'] =  $homeFormatted;
         $jsonString['url'] = $currentHome;
         $jsonString['logo'] = $image[0];      
         // Write meta description from yoast 
