@@ -1,17 +1,4 @@
-<!DOCTYPE html>
- <html>
- <head>
- <title>Maaainn</title>
- </head>
- <body>
- 
- <h1>This is a Main</h1>
- <p>This is a paragraph of amsterdam.</p>
- </body>
- 
- <footer>
  <?php
-    echo 'CONTENT LOADED' . '<br>' . '<br>';
     // Build Json file
     $data = '{
         "@context": "http:\/\/schema.org",
@@ -23,9 +10,9 @@
         "description": "Altijd de beste boekhouder offertes uit uw omgeving.",
         "address": {
             "@type": "PostalAddress",
-            "addressCountry": "Amsterdam, Netherlands"
+            "addressCountry": "Netherlands"
         },
-        "areaServed": "Netherlands",
+        "areaServed": "",
         "contactPoint": {
             "@type": "ContactPoint",
             "contactType": "Sales",
@@ -39,6 +26,7 @@
     $currentServer = $_SERVER['SERVER_NAME'];
     $currentDirectory = getcwd();
     $currentHome = get_home_url();
+    $social_data = [];
     // Get the current logo
     $custom_logo_id = get_theme_mod( 'custom_logo' );
     $image = wp_get_attachment_image_src( $custom_logo_id , 'full' );
@@ -59,7 +47,34 @@
     $loc = str_replace('/', '', $currentPage);
     $loc_name = str_replace('.php', '', $preg_result[1]);
     $loc_Trimmed = preg_replace("/[\W\-]/", ' ', $loc_name);
-    $locFormatted = ucfirst($loc_Trimmed);
+    $locFormatted = ucfirst($loc_Trimmed);  
+
+    // Get Jetpack data from database
+    $results = $GLOBALS['wpdb']->get_results( "SELECT * FROM {$wpdb->prefix}options WHERE `option_name`='jetpack_options'"  );
+    // get object property out of the array
+    $get_data = $results[0]->option_value;
+    // Deserialize the data from database
+    $php_data = unserialize($get_data);
+
+    // Loop thrue the array, and get the url data 
+    foreach($php_data['publicize_connections']['facebook'] as $value){
+        $temp = $value['connection_data']['meta']['link'];
+        array_push($social_data, $temp);
+    }
+    foreach($php_data['publicize_connections']['twitter'] as $value){
+        $temp = $value['connection_data']['meta']['link'];
+        array_push($social_data, $temp);
+    }
+    foreach($php_data['publicize_connections']['linkedin'] as $value){
+        $temp = $value['connection_data']['id'];
+        $temp = 'https://www.linkedin.com/company/' . $temp;
+        array_push($social_data, $temp);
+    }
+    foreach($php_data['publicize_connections']['google_plus'] as $value){
+        $temp = $value['external_id'];
+        $temp = 'https://plus.google.com/' . $temp;
+        array_push($social_data, $temp); 
+    } 
 
     // Yoast meta description
     $yoast = get_post_meta(get_the_ID(), '_yoast_wpseo_metadesc', true); 
@@ -72,16 +87,14 @@
     }
         // Decode the json data in php readable code
         $jsonString = json_decode($data, true);
-
-        // Write location name based on url to the Json
-        $jsonString['address']['addressCountry'] = $locFormatted;
-        // Write name, url and logo
+        
+        // Write the dynamic input to the Json file, and append it to the page
+        $jsonString['areaServed'] = $locFormatted . ", Netherlands"; // Write location name based on url to the Json
         $jsonString['name'] =  $homeFormatted;
         $jsonString['url'] = $currentHome;
         $jsonString['logo'] = $image[0];      
-        // Write meta description from yoast 
-        $jsonString['description'] = $yoast;
-        //  Contact information
+        $jsonString['description'] = $yoast; 
+        $jsonString['sameAs'] = $social_data; 
         $jsonString['contactPoint']['email'] = 'info@' . $homeReplaced;
         $jsonString['contactPoint']['url'] = $currentHome;
 
@@ -94,5 +107,3 @@
          $data = $new_data;
          echo $data;
 ?>
- </footer>
- </html> 
