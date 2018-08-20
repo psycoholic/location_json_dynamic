@@ -65,26 +65,20 @@
         $temp = $value['connection_data']['meta']['link'];
         array_push($social_data, $temp);
     }
-    foreach($php_data['publicize_connections']['linkedin'] as $value){
-        $temp = $value['connection_data']['id'];
-        $temp = 'https://www.linkedin.com/company/' . $temp;
-        array_push($social_data, $temp);
-    }
+    // foreach($php_data['publicize_connections']['linkedin'] as $value){
+    //     $temp = $value['connection_data']['id'];
+    //     $temp = 'https://www.linkedin.com/company/' . $temp;
+    //     array_push($social_data, $temp);
+    // }
     foreach($php_data['publicize_connections']['google_plus'] as $value){
         $temp = $value['external_id'];
         $temp = 'https://plus.google.com/' . $temp;
         array_push($social_data, $temp); 
-    } 
+    }
 
     // Yoast meta description
     $yoast = get_post_meta(get_the_ID(), '_yoast_wpseo_metadesc', true); 
-    if (empty($yoast)) {
-        // Yoast has not been found, get standard meta data
-        $yoast = get_post_meta(get_the_ID());
-    } else {
-        // Yoast has been found
-        $yoast = $yoast;
-    }
+
         // Decode the json data in php readable code
         $jsonString = json_decode($data, true);
         
@@ -100,8 +94,9 @@
 
         // Re-encode the data
         $newJsonString = json_encode($jsonString, true);
+
         // Rewrite the data to readable data
-        $new_data = '<script type="application/json">' . strval($newJsonString) . "<script>";
+        $new_data = '<script type="application/ld+json">' . strval($newJsonString) . '</script>';
 
         // Write the updated json file to the content
          $data = $new_data;
